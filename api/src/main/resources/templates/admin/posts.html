@@ -7,48 +7,29 @@
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
-<header th:replace="~{fragments/layout :: header(${username}, ${avatar}, ${discordId})}"></header>
+<header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
 
 <main class="admin-content">
     <div class="admin-header">
         <h1>포스트 관리</h1>
-        <button type="button" id="addPostBtn" class="login-btn">+ 테스트 포스트 생성</button>
     </div>
 
     <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
 
-    <div class="settings-panel post-form-panel" id="newPostPanel" style="display:none;">
-        <div class="post-form-grid">
-            <label class="post-form-label">Discord Message ID
-                <input id="newDiscordMessageId" type="text">
-            </label>
-            <label class="post-form-label">작성자 Discord ID
-                <input id="newAuthorDiscordId" type="text">
-            </label>
-            <label class="post-form-label">작성자 아이콘 URL
-                <input id="newAuthorDiscordIcon" type="text">
-            </label>
-            <label class="post-form-label">작성자 닉네임
-                <input id="newAuthorDiscordNickname" type="text">
-            </label>
-            <label class="post-form-label">제목
-                <input id="newTitle" type="text">
-            </label>
+    <div class="post-list" id="postGrid"></div>
+</main>
+
+<div class="preview-modal-backdrop" id="failureLogModal" hidden>
+    <div class="preview-modal">
+        <div class="preview-modal-header">
+            <strong>⚠ 발행 실패 로그</strong>
+            <button type="button" class="preview-modal-close" id="failureLogCloseBtn" aria-label="닫기">✕</button>
         </div>
-        <label class="post-form-label">사진 URL (쉼표로 구분, 비워도 됨)
-            <input id="newPhotoUrls" type="text" placeholder="https://.../1.png, https://.../2.png">
-        </label>
-        <label class="post-form-label">캡션
-            <textarea id="newCaption" rows="3"></textarea>
-        </label>
-        <div class="settings-row-actions">
-            <button type="button" id="confirmAddPostBtn" class="save-btn">생성</button>
-            <button type="button" id="cancelAddPostBtn" class="logout-btn">취소</button>
+        <div class="preview-modal-body">
+            <p class="post-form-hint" style="padding: 20px;">에러 로그 기능은 추후 제공될 예정입니다.</p>
         </div>
     </div>
-
-    <div class="post-grid" id="postGrid" th:attr="data-current-discord-id=${discordId}"></div>
-</main>
+</div>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 

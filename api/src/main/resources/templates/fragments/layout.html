@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
-<header th:fragment="header(username, avatar, discordId)" class="navbar">
+<header th:fragment="header(username, currentDiscordIcon, currentDiscordId)" class="navbar">
     <div class="navbar-inner">
         <div class="navbar-left">
             <a href="/" class="logo">PostManager</a>
             <nav class="nav-menu">
-                <a th:if="${username}" href="/admin/posts" class="nav-link">포스트 관리</a>
+                <a th:if="${username}" href="/posts" class="nav-link">포스트 관리</a>
                 <a th:if="${username}" href="/admin/configs" class="nav-link">설정 관리</a>
                 <a href="https://linktr.ee/team_plamason" class="nav-link" target="_blank" rel="noopener">Linktree</a>
             </nav>
         </div>
         <div class="auth-area">
             <div th:if="${username}" class="user-info">
-                <img th:if="${avatar}" th:src="'https://cdn.discordapp.com/avatars/' + ${discordId} + '/' + ${avatar} + '.png'" class="avatar" alt="avatar">
+                <img th:if="${currentDiscordIcon}" th:src="'https://cdn.discordapp.com/avatars/' + ${currentDiscordId} + '/' + ${currentDiscordIcon} + '.png'" class="avatar" alt="avatar">
                 <span th:text="${username}">사용자</span>
                 <form th:action="@{/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button type="submit" class="logout-btn">로그아웃</button>
                 </form>
             </div>

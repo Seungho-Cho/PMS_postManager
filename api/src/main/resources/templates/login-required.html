@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>로그인이 필요합니다 · PostManager</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<main class="auth-gate">
+    <div class="auth-gate-card">
+        <div class="auth-gate-icon">🔒</div>
+        <span class="auth-gate-logo">PostManager</span>
+        <h1>로그인이 필요해요</h1>
+        <p>최초 1회만 Discord 계정으로 로그인하면 30일간 로그인 상태가 유지돼요.<br>로그인하면 원래 보려던 페이지로 바로 이동합니다.</p>
+        <a th:href="@{/oauth2/authorization/discord}" class="login-btn auth-gate-btn">
+            Discord로 로그인
+        </a>
+    </div>
+</main>
+</body>
+</html>

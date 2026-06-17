@@ -7,9 +7,9 @@ import com.mason.common.event.KafkaTopics;
 import com.mason.common.event.PhotoUploadRequested;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -68,7 +68,7 @@ public class PhotoUploadListener extends ListenerAdapter {
             .build();
         event.getMessage().replyEmbeds(processingEmbed).queue();
 
-        User author = event.getAuthor();
+        Member author = event.getMember();
         PhotoUploadRequested requested = new PhotoUploadRequested(
             discordMessageId,
             channelId,

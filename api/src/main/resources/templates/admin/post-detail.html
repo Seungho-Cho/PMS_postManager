@@ -7,11 +7,11 @@
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
-<header th:replace="~{fragments/layout :: header(${username}, ${avatar}, ${discordId})}"></header>
+<header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
 
-<main class="admin-content" id="postDetailRoot" th:attr="data-post-id=${postId}">
+<main class="admin-content" id="postDetailRoot" th:attr="data-post-id=${postId},data-current-discord-id=${currentDiscordId}">
     <div class="admin-header">
-        <a href="/admin/posts" class="nav-link">← 목록으로</a>
+        <a href="/posts" class="nav-link">← 목록으로</a>
     </div>
 
     <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
@@ -19,19 +19,57 @@
     <div class="post-photos" id="postPhotos"></div>
 
     <div class="settings-panel post-detail-form">
-        <label class="post-form-label">제목
+        <label class="post-form-label"><span>제목 <span class="post-form-required">*</span></span>
             <input id="titleInput" type="text">
+            <span class="post-form-hint">예: Tamiya 1/24 Mercedes-AMG GT3</span>
         </label>
-        <label class="post-form-label">캡션
+        <div class="post-form-grid post-form-grid-3">
+            <label class="post-form-label"><span>제작자 이름 <span class="post-form-required">*</span></span>
+                <input id="makerNameInput" type="text">
+                <span class="post-form-hint">예: 홍길동</span>
+            </label>
+            <label class="post-form-label"><span>Instagram ID <span class="post-form-optional">(선택)</span></span>
+                <input id="makerInstagramIdInput" type="text">
+                <span class="post-form-hint">@ 없이, 예: hong_makes</span>
+            </label>
+            <label class="post-form-label"><span>X ID <span class="post-form-optional">(선택)</span></span>
+                <input id="makerXIdInput" type="text">
+                <span class="post-form-hint">@ 없이, 예: hong_x</span>
+            </label>
+        </div>
+        <label class="post-form-label">설명
             <textarea id="captionInput" rows="6"></textarea>
         </label>
-        <div class="settings-row-actions">
-            <button type="button" id="saveDraftBtn" class="logout-btn">임시저장</button>
-            <button type="button" id="scheduleBtn" class="save-btn">포스팅</button>
-            <button type="button" id="deleteBtn" class="logout-btn">삭제</button>
+        <div class="post-form-caption-tools">
+            <button type="button" id="suggestTagsBtn" class="ai-suggest-btn">✨ AI 태그 추천</button>
+        </div>
+        <div class="post-detail-actions">
+            <button type="button" id="deleteBtn" class="danger-btn">삭제</button>
+            <div class="post-detail-actions-primary">
+                <button type="button" id="previewBtn" class="ghost-btn">미리보기</button>
+                <button type="button" id="saveDraftBtn" class="ghost-btn">임시저장</button>
+                <button type="button" id="scheduleBtn" class="save-btn">포스팅 예약</button>
+            </div>
         </div>
     </div>
 </main>
+
+<div class="preview-modal-backdrop" id="previewModal" hidden>
+    <div class="preview-modal">
+        <div class="preview-modal-header">
+            <div class="preview-tabs">
+                <button type="button" class="preview-tab is-active" data-platform="instagram">
+                    <img src="https://cdn.simpleicons.org/instagram" class="preview-tab-icon" alt="">Instagram
+                </button>
+                <button type="button" class="preview-tab" data-platform="x">
+                    <img src="https://cdn.simpleicons.org/x" class="preview-tab-icon" alt="">X
+                </button>
+            </div>
+            <button type="button" class="preview-modal-close" id="previewCloseBtn" aria-label="닫기">✕</button>
+        </div>
+        <div class="preview-modal-body" id="previewBody"></div>
+    </div>
+</div>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 

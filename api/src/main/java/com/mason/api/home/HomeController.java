@@ -13,4 +13,9 @@ public class HomeController {
     public String home() {
         return "index";
     }
+
+    @GetMapping("/login-required")
+    public String loginRequired() {
+        return "login-required";
+    }
 }

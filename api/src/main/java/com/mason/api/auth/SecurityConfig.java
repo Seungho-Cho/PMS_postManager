@@ -22,14 +22,14 @@ public class SecurityConfig {
             )
             .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/login-required", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
-                .loginPage("/")
+                .loginPage("/login-required")
                 .userInfoEndpoint(userInfo -> userInfo.userService(discordOAuth2UserService))
-                .defaultSuccessUrl("/", true)
+                .defaultSuccessUrl("/", false)
                 .failureUrl("/?loginError=true")
             )
             .logout(logout -> logout

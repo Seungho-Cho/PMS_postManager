@@ -52,6 +52,15 @@ public class Post {
     @Column(name = "caption")
     private String caption;
 
+    @Column(name = "maker_name")
+    private String makerName;
+
+    @Column(name = "maker_instagram_id")
+    private String makerInstagramId;
+
+    @Column(name = "maker_x_id")
+    private String makerXId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PostStatus status;
@@ -90,11 +99,14 @@ public class Post {
     }
 
     /**
-     * 사용자가 웹에서 작성하는 title/caption을 갱신한다.
+     * 사용자가 웹에서 작성하는 title/caption/제작자 정보를 갱신한다.
      */
-    public void updateContent(String title, String caption) {
+    public void updateContent(String title, String caption, String makerName, String makerInstagramId, String makerXId) {
         this.title = title;
         this.caption = caption;
+        this.makerName = makerName;
+        this.makerInstagramId = makerInstagramId;
+        this.makerXId = makerXId;
         this.updatedAt = LocalDateTime.now();
     }
 

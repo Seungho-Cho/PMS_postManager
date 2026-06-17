@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Controller
 public class PostViewController {
 
-    @GetMapping("/admin/posts")
+    @GetMapping("/posts")
     public String posts() {
         return "admin/posts";
     }
 
-    @GetMapping("/admin/posts/{id}")
+    @GetMapping("/posts/{id}")
     public String postDetail(@PathVariable Long id, Model model) {
         model.addAttribute("postId", id);
         return "admin/post-detail";

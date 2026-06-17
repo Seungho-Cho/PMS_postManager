@@ -3,17 +3,8 @@ const API_BASE = '/api/posts';
 const postGrid = document.getElementById('postGrid');
 const errorBanner = document.getElementById('errorBanner');
 
-const addPostBtn = document.getElementById('addPostBtn');
-const newPostPanel = document.getElementById('newPostPanel');
-const newDiscordMessageId = document.getElementById('newDiscordMessageId');
-const newAuthorDiscordId = document.getElementById('newAuthorDiscordId');
-const newAuthorDiscordIcon = document.getElementById('newAuthorDiscordIcon');
-const newAuthorDiscordNickname = document.getElementById('newAuthorDiscordNickname');
-const newTitle = document.getElementById('newTitle');
-const newPhotoUrls = document.getElementById('newPhotoUrls');
-const newCaption = document.getElementById('newCaption');
-const confirmAddPostBtn = document.getElementById('confirmAddPostBtn');
-const cancelAddPostBtn = document.getElementById('cancelAddPostBtn');
+const failureLogModal = document.getElementById('failureLogModal');
+const failureLogCloseBtn = document.getElementById('failureLogCloseBtn');
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -26,42 +17,57 @@ function showError(message) {
     errorBanner.style.display = 'block';
 }
 
-function clearError() {
-    errorBanner.style.display = 'none';
-}
-
 function formatDateTime(isoString) {
     const [date, time] = isoString.split('T');
     return `${date} ${time.slice(0, 5)}`;
 }
 
+const STATUS_LABELS = {
+    DRAFT: '임시저장',
+    SCHEDULED: '예약됨',
+    POSTED: '포스팅 완료',
+    FAILED: '포스팅 실패',
+};
+
+function renderStatusBadge(post) {
+    const label = STATUS_LABELS[post.status] ?? post.status;
+    if (post.status === 'FAILED') {
+        return `<button type="button" class="post-status post-status-failed post-status-btn" data-id="${post.id}">⚠ ${label}</button>`;
+    }
+    return `<span class="post-status post-status-${post.status.toLowerCase()}">${label}</span>`;
+}
+
 function renderGrid(posts) {
     postGrid.innerHTML = '';
     posts.forEach((post) => {
-        const card = document.createElement('div');
-        card.className = 'post-card';
-        card.dataset.id = post.id;
-        card.dataset.authorId = post.authorDiscordId;
-        card.dataset.authorNickname = post.authorDiscordNickname;
+        const row = document.createElement('div');
+        row.className = 'post-row';
+        row.dataset.id = post.id;
 
         const thumbnailUrl = post.photos[0]?.thumbnailUrl;
         const thumbHtml = thumbnailUrl
             ? `<img src="${escapeHtml(thumbnailUrl)}" alt="">`
             : `<span class="post-card-thumb-empty">No Photo</span>`;
 
-        card.innerHTML = `
-            <div class="post-card-thumb">${thumbHtml}</div>
-            <div class="post-card-body">
-                <span class="post-status post-status-${post.status.toLowerCase()}">${post.status}</span>
-                <h3 class="post-card-title">${escapeHtml(post.title) || '(제목 없음)'}</h3>
-                <p class="settings-meta">${escapeHtml(post.authorDiscordNickname)} · ${escapeHtml(formatDateTime(post.createdAt))}</p>
-            </div>
-            <div class="post-card-actions">
-                <a href="/admin/posts/${post.id}" class="nav-link edit-link">편집</a>
-                <button type="button" class="logout-btn delete-btn">삭제</button>
-            </div>
+        row.innerHTML = `
+            <a href="/posts/${post.id}" class="post-row-link">
+                <div class="post-row-thumb">${thumbHtml}</div>
+                <div class="post-row-content">
+                    <div class="post-row-top">
+                        <h3 class="post-row-title">${escapeHtml(post.title) || '(제목 없음)'}</h3>
+                        ${renderStatusBadge(post)}
+                    </div>
+                    <div class="post-row-bottom">
+                        <span class="post-row-author">
+                            ${post.authorDiscordIcon ? `<img class="post-row-avatar" src="${escapeHtml(post.authorDiscordIcon)}" alt="">` : '<span class="post-row-avatar"></span>'}
+                            ${escapeHtml(post.authorDiscordNickname)}
+                        </span>
+                        <span class="post-row-time">최종수정일시 ${escapeHtml(formatDateTime(post.updatedAt))}</span>
+                    </div>
+                </div>
+            </a>
         `;
-        postGrid.appendChild(card);
+        postGrid.appendChild(row);
     });
 }
 
@@ -74,88 +80,28 @@ async function loadPosts() {
     renderGrid(await res.json());
 }
 
-function openAddPanel() {
-    newPostPanel.style.display = 'flex';
-    newDiscordMessageId.focus();
+function openFailureLogModal() {
+    failureLogModal.hidden = false;
 }
 
-function closeAddPanel() {
-    newPostPanel.style.display = 'none';
-    [newDiscordMessageId, newAuthorDiscordId, newAuthorDiscordIcon, newAuthorDiscordNickname, newTitle, newPhotoUrls, newCaption]
-        .forEach((input) => { input.value = ''; });
+function closeFailureLogModal() {
+    failureLogModal.hidden = true;
 }
 
-async function handleAdd() {
-    clearError();
-
-    const photoUrls = newPhotoUrls.value
-        .split(',')
-        .map((url) => url.trim())
-        .filter((url) => url.length > 0);
-
-    const res = await fetch(API_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...csrfHeader() },
-        body: JSON.stringify({
-            discordMessageId: newDiscordMessageId.value,
-            authorDiscordId: newAuthorDiscordId.value,
-            authorDiscordIcon: newAuthorDiscordIcon.value,
-            authorDiscordNickname: newAuthorDiscordNickname.value,
-            title: newTitle.value,
-            caption: newCaption.value,
-            photoUrls,
-        }),
-    });
-
-    if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        showError(body?.message ?? '생성에 실패했습니다.');
-        return;
-    }
-
-    closeAddPanel();
-    await loadPosts();
-}
-
-function handleEditClick(event) {
-    const link = event.target.closest('.edit-link');
-    if (!link) {
-        return;
-    }
-    const card = link.closest('.post-card');
-    const currentDiscordId = postGrid.dataset.currentDiscordId;
-
-    if (currentDiscordId && card.dataset.authorId && card.dataset.authorId !== currentDiscordId) {
-        const confirmed = window.confirm(`${card.dataset.authorNickname}님이 작성한 포스트입니다. 편집하시겠습니까?`);
-        if (!confirmed) {
-            event.preventDefault();
-        }
+function handleGridClick(event) {
+    const statusBtn = event.target.closest('.post-status-btn');
+    if (statusBtn) {
+        event.preventDefault();
+        openFailureLogModal();
     }
 }
 
-async function handleGridClick(event) {
-    handleEditClick(event);
-
-    if (!event.target.classList.contains('delete-btn')) {
-        return;
-    }
-    const card = event.target.closest('.post-card');
-    clearError();
-
-    const res = await fetch(`${API_BASE}/${card.dataset.id}`, {
-        method: 'DELETE',
-        headers: csrfHeader(),
-    });
-    if (!res.ok) {
-        showError('삭제에 실패했습니다.');
-        return;
-    }
-    await loadPosts();
-}
-
-addPostBtn.addEventListener('click', openAddPanel);
-cancelAddPostBtn.addEventListener('click', closeAddPanel);
-confirmAddPostBtn.addEventListener('click', handleAdd);
 postGrid.addEventListener('click', handleGridClick);
+failureLogCloseBtn.addEventListener('click', closeFailureLogModal);
+failureLogModal.addEventListener('click', (event) => {
+    if (event.target === failureLogModal) {
+        closeFailureLogModal();
+    }
+});
 
 loadPosts();

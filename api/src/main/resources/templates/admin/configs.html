@@ -7,7 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
-<header th:replace="~{fragments/layout :: header(${username}, ${avatar}, ${discordId})}"></header>
+<header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
 
 <main class="admin-content">
     <div class="admin-header">
@@ -39,7 +39,7 @@
         <div class="settings-panel">
             <div class="settings-row settings-row-new" id="newConfigRow" style="display:none;">
                 <input id="newKeyInput" type="text" placeholder="key" class="key-input">
-                <input id="newValueInput" type="text" placeholder="value" class="value-input">
+                <textarea id="newValueInput" placeholder="value" class="value-input" rows="1"></textarea>
                 <div class="settings-row-actions">
                     <button type="button" id="confirmAddBtn" class="save-btn">추가</button>
                     <button type="button" id="cancelAddBtn" class="logout-btn">취소</button>

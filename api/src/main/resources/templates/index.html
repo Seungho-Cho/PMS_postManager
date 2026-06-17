@@ -10,7 +10,7 @@
 <div th:if="${param.loginError}" class="login-error-banner">
     해당 Discord 서버 멤버만 로그인할 수 있습니다.
 </div>
-<header th:replace="~{fragments/layout :: header(${username}, ${avatar}, ${discordId})}"></header>
+<header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
 
 <main class="hero">
     <div class="hero-inner">

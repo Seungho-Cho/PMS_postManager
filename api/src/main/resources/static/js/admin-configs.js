@@ -30,6 +30,11 @@ function formatDateTime(isoString) {
     return `${date} ${time.slice(0, 5)}`;
 }
 
+function autoGrow(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+}
+
 function renderList(configs) {
     configList.innerHTML = '';
     configs.forEach((config) => {
@@ -41,13 +46,16 @@ function renderList(configs) {
                 <span class="settings-key">${escapeHtml(config.key)}</span>
                 <span class="settings-meta">수정 ${escapeHtml(formatDateTime(config.updatedAt))}</span>
             </div>
-            <input type="text" class="value-input" value="${escapeHtml(config.value)}">
+            <textarea class="value-input" rows="1">${escapeHtml(config.value)}</textarea>
             <div class="settings-row-actions">
                 <button type="button" class="save-btn">저장</button>
                 <button type="button" class="logout-btn delete-btn">삭제</button>
             </div>
         `;
         configList.appendChild(row);
+        const valueInput = row.querySelector('.value-input');
+        autoGrow(valueInput);
+        valueInput.addEventListener('input', () => autoGrow(valueInput));
     });
 }
 
@@ -143,6 +151,8 @@ async function handleBotAction(action) {
 document.getElementById('botStartBtn').addEventListener('click', () => handleBotAction('start'));
 document.getElementById('botRestartBtn').addEventListener('click', () => handleBotAction('restart'));
 document.getElementById('botStopBtn').addEventListener('click', () => handleBotAction('stop'));
+
+newValueInput.addEventListener('input', () => autoGrow(newValueInput));
 
 addConfigBtn.addEventListener('click', openAddRow);
 cancelAddBtn.addEventListener('click', closeAddRow);

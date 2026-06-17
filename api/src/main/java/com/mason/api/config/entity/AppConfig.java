@@ -25,7 +25,7 @@ public class AppConfig {
     @Column(name = "config_key", nullable = false)
     private String key;
 
-    @Column(name = "config_value", nullable = false, length = 1000)
+    @Column(name = "config_value", nullable = false, columnDefinition = "text")
     private String value;
 
     @Column(name = "updated_at", nullable = false)

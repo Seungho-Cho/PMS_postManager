@@ -28,6 +28,6 @@ public final class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeH
     @Override
     public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
         String headerValue = request.getHeader(csrfToken.getHeaderName());
-        return StringUtils.hasText(headerValue) ? headerValue : super.resolveCsrfTokenValue(request, csrfToken);
+        return StringUtils.hasText(headerValue) ? headerValue : this.delegate.resolveCsrfTokenValue(request, csrfToken);
     }
 }

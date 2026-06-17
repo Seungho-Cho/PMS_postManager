@@ -3,7 +3,9 @@
     "allow": [
       "Read(//mnt/c/spring/PMS_postManager/**)",
       "Read(//tmp/**)",
-      "Bash(javap net/dv8tion/jda/api/entities/channel/middleman/MessageChannel.class)"
+      "Bash(javap net/dv8tion/jda/api/entities/channel/middleman/MessageChannel.class)",
+      "Bash(docker exec *)",
+      "WebSearch"
     ]
   }
 }

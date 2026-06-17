@@ -51,9 +51,10 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
   - 도메인 모듈: 사용자/인증, 포스팅(Post/Photo), 태그/번역, 스케줄링
 - **discord-bot**: JDA 기반, 상시 WebSocket 연결 유지, 특정 채널 사진 업로드 감지 → 첨부파일 URL을 Kafka로 전달 (R2 업로드는 직접 하지 않음, 자격증명을 들고 있지 않음)
 - **common**: 두 서비스가 공유하는 라이브러리 모듈 (도메인 로직 없음)
-  - 외부 연동 클라이언트: Instagram Graph API, X API, Groq API (api에서만 사용하지만, 도메인 로직과 분리하기 위해 위치)
+  - 외부 연동 클라이언트: Instagram Graph API, X API (api에서만 사용하지만, 도메인 로직과 분리하기 위해 위치)
   - Kafka 이벤트 DTO
   - Cloudflare R2 클라이언트는 `api`만 사용하므로 `common`이 아니라 `api` 내부(`com.mason.api.r2`)에 위치 — 다른 서비스가 R2를 쓰게 되면 그때 `common`으로 끌어올린다
+  - Groq API 클라이언트도 같은 이유로 `common`이 아니라 `api` 내부(`com.mason.api.groq`)에 위치 — 단순 HTTP 호출 1개뿐이라 분리 비용이 이점보다 큼
 - 통신: Kafka로 비동기 처리 (아래 "포스팅 생성 플로우" 참고), 나머지(예약 발행 등)는 api 내부에서 처리
 - DB: PostgreSQL, `api`만 접근 (다른 서비스는 직접 DB를 건드리지 않음)
 
@@ -104,7 +105,8 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 - Discord OAuth2: Spring Security OAuth2 Client (api)
 - Cloudflare R2: AWS SDK for Java (S3 호환) — `api`에서만 호출 (`com.mason.api.r2`), discord-bot은 R2를 직접 다루지 않음
 - 썸네일 생성: Thumbnailator (경량 라이브러리, api에서만 사용)
-- Instagram Graph API / X API / Groq API 클라이언트는 `common` 모듈에 위치 (api에서만 쓰지만 도메인 로직과 분리)
+- Instagram Graph API / X API 클라이언트는 `common` 모듈에 위치 (api에서만 쓰지만 도메인 로직과 분리)
+- Groq API 클라이언트는 `api` 내부(`com.mason.api.groq`)에 위치 — api에서만 쓰는 단순 HTTP 호출이라 `common`으로 분리하지 않음
 - HTTP 클라이언트: WebClient / RestClient
 - 장애 대응: Resilience4j (재시도, 서킷브레이커, 레이트리밋)
   - 대상: Instagram Graph API, X API, Groq API (모두 정책 제약 있는 외부 의존성)

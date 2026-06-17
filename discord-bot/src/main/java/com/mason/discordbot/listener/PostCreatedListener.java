@@ -69,7 +69,7 @@ public class PostCreatedListener {
                 .build();
 
             channel.editMessageEmbedsById(processingReply.getId(), successEmbed)
-                .setActionRow(Button.link(event.postEditUrl(), "✏️  포스트 수정하기"))
+                .setActionRow(Button.link(event.postEditUrl(), "✏️  포스트 작성하기"))
                 .queue();
         });
     }
