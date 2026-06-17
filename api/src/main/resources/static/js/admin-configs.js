@@ -17,11 +17,19 @@ function escapeHtml(text) {
 }
 
 function showError(message) {
+    errorBanner.classList.remove('is-success');
+    errorBanner.textContent = message;
+    errorBanner.style.display = 'block';
+}
+
+function showSuccess(message) {
+    errorBanner.classList.add('is-success');
     errorBanner.textContent = message;
     errorBanner.style.display = 'block';
 }
 
 function clearError() {
+    errorBanner.classList.remove('is-success');
     errorBanner.style.display = 'none';
 }
 
@@ -35,27 +43,81 @@ function autoGrow(textarea) {
     textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
+const expandedGroups = new Set();
+
+function groupByPrefix(configs) {
+    const groups = new Map();
+    configs.forEach((config) => {
+        const prefix = config.key.includes('.') ? config.key.split('.')[0] : '기타';
+        if (!groups.has(prefix)) {
+            groups.set(prefix, []);
+        }
+        groups.get(prefix).push(config);
+    });
+    return groups;
+}
+
+function renderConfigRow(config) {
+    const row = document.createElement('div');
+    row.className = 'settings-row';
+    row.dataset.key = config.key;
+    row.innerHTML = `
+        <div class="settings-row-label">
+            <span class="settings-key">${escapeHtml(config.key)}</span>
+            <span class="settings-meta">수정 ${escapeHtml(formatDateTime(config.updatedAt))}</span>
+        </div>
+        <textarea class="value-input" rows="1">${escapeHtml(config.value)}</textarea>
+        <div class="settings-row-actions">
+            <button type="button" class="save-btn">저장</button>
+            <button type="button" class="logout-btn delete-btn">삭제</button>
+        </div>
+    `;
+    return row;
+}
+
 function renderList(configs) {
     configList.innerHTML = '';
-    configs.forEach((config) => {
-        const row = document.createElement('div');
-        row.className = 'settings-row';
-        row.dataset.key = config.key;
-        row.innerHTML = `
-            <div class="settings-row-label">
-                <span class="settings-key">${escapeHtml(config.key)}</span>
-                <span class="settings-meta">수정 ${escapeHtml(formatDateTime(config.updatedAt))}</span>
-            </div>
-            <textarea class="value-input" rows="1">${escapeHtml(config.value)}</textarea>
-            <div class="settings-row-actions">
-                <button type="button" class="save-btn">저장</button>
-                <button type="button" class="logout-btn delete-btn">삭제</button>
-            </div>
+
+    groupByPrefix(configs).forEach((groupConfigs, prefix) => {
+        const isExpanded = expandedGroups.has(prefix);
+
+        const group = document.createElement('div');
+        group.className = 'settings-group';
+
+        const header = document.createElement('button');
+        header.type = 'button';
+        header.className = 'settings-group-header';
+        header.innerHTML = `
+            <span class="settings-group-chevron">${isExpanded ? '▾' : '▸'}</span>
+            <span class="settings-group-title">${escapeHtml(prefix)}</span>
+            <span class="settings-group-count">${groupConfigs.length}개</span>
         `;
-        configList.appendChild(row);
-        const valueInput = row.querySelector('.value-input');
-        autoGrow(valueInput);
-        valueInput.addEventListener('input', () => autoGrow(valueInput));
+        header.addEventListener('click', () => {
+            if (expandedGroups.has(prefix)) {
+                expandedGroups.delete(prefix);
+            } else {
+                expandedGroups.add(prefix);
+            }
+            renderList(configs);
+        });
+
+        const body = document.createElement('div');
+        body.className = 'settings-group-body';
+        body.hidden = !isExpanded;
+
+        const rows = groupConfigs.map((config) => renderConfigRow(config));
+        rows.forEach((row) => body.appendChild(row));
+
+        group.appendChild(header);
+        group.appendChild(body);
+        configList.appendChild(group);
+
+        // body가 실제로 DOM에 붙은 뒤에 계산해야 scrollHeight가 0으로 잡히지 않는다.
+        rows.forEach((row) => {
+            const valueInput = row.querySelector('.value-input');
+            autoGrow(valueInput);
+            valueInput.addEventListener('input', () => autoGrow(valueInput));
+        });
     });
 }
 
@@ -151,6 +213,82 @@ async function handleBotAction(action) {
 document.getElementById('botStartBtn').addEventListener('click', () => handleBotAction('start'));
 document.getElementById('botRestartBtn').addEventListener('click', () => handleBotAction('restart'));
 document.getElementById('botStopBtn').addEventListener('click', () => handleBotAction('stop'));
+
+const INSTAGRAM_EXPIRY_WARNING_DAYS = 7;
+
+const instagramStatusDot = document.getElementById('instagramStatusDot');
+const instagramStatusMeta = document.getElementById('instagramStatusMeta');
+const instagramRecheckBtn = document.getElementById('instagramRecheckBtn');
+const instagramRefreshBtn = document.getElementById('instagramRefreshBtn');
+
+function setInstagramStatus(color, message) {
+    instagramStatusDot.className = `status-dot status-dot-${color}`;
+    instagramStatusMeta.textContent = message;
+}
+
+async function loadInstagramStatus() {
+    setInstagramStatus('gray', '확인 중...');
+    let res;
+    try {
+        res = await fetch('/api/instagram/status');
+    } catch {
+        setInstagramStatus('red', '상태를 확인하지 못했습니다 (네트워크 오류).');
+        return;
+    }
+
+    if (res.status === 404) {
+        setInstagramStatus('red', 'instagram.api.access.token 설정이 없습니다.');
+        return;
+    }
+    if (!res.ok) {
+        setInstagramStatus('red', '상태를 확인하지 못했습니다.');
+        return;
+    }
+
+    const { valid, message, lastUpdatedAt, estimatedExpiresAt } = await res.json();
+    const updatedText = lastUpdatedAt ? `최종 수정 ${formatDateTime(lastUpdatedAt)}` : null;
+
+    if (!valid) {
+        setInstagramStatus('red', [message ?? '토큰이 유효하지 않습니다.', updatedText].filter(Boolean).join('\n'));
+        return;
+    }
+
+    const daysLeft = Math.floor((new Date(estimatedExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    const estimatedText = `예상 잔여 D-${daysLeft}`;
+    const detail = [estimatedText, updatedText].filter(Boolean).join('\n');
+
+    setInstagramStatus(daysLeft <= INSTAGRAM_EXPIRY_WARNING_DAYS ? 'yellow' : 'green', detail);
+}
+
+async function handleInstagramRefresh() {
+    clearError();
+    instagramRefreshBtn.disabled = true;
+    instagramRefreshBtn.textContent = '갱신 중...';
+    try {
+        const res = await fetch('/api/instagram/refresh', {
+            method: 'POST',
+            headers: csrfHeader(),
+        });
+        if (!res.ok) {
+            showError('토큰 갱신 요청에 실패했습니다.');
+            return;
+        }
+        const { valid, message } = await res.json();
+        if (!valid) {
+            showError(message ?? '토큰 갱신에 실패했습니다.');
+        } else {
+            showSuccess(message ?? '토큰을 갱신했습니다.');
+        }
+        await loadInstagramStatus();
+    } finally {
+        instagramRefreshBtn.disabled = false;
+        instagramRefreshBtn.textContent = '수동 갱신';
+    }
+}
+
+instagramRecheckBtn.addEventListener('click', loadInstagramStatus);
+instagramRefreshBtn.addEventListener('click', handleInstagramRefresh);
+loadInstagramStatus();
 
 newValueInput.addEventListener('input', () => autoGrow(newValueInput));
 

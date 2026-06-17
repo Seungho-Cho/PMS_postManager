@@ -50,11 +50,8 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 - **api**: REST API, 인증, 도메인 로직 전부 (Post/Photo/Tag), 예약 발행 스케줄링(`@Scheduled`), DB 쓰기 단일 책임자
   - 도메인 모듈: 사용자/인증, 포스팅(Post/Photo), 태그/번역, 스케줄링
 - **discord-bot**: JDA 기반, 상시 WebSocket 연결 유지, 특정 채널 사진 업로드 감지 → 첨부파일 URL을 Kafka로 전달 (R2 업로드는 직접 하지 않음, 자격증명을 들고 있지 않음)
-- **common**: 두 서비스가 공유하는 라이브러리 모듈 (도메인 로직 없음)
-  - 외부 연동 클라이언트: Instagram Graph API, X API (api에서만 사용하지만, 도메인 로직과 분리하기 위해 위치)
-  - Kafka 이벤트 DTO
-  - Cloudflare R2 클라이언트는 `api`만 사용하므로 `common`이 아니라 `api` 내부(`com.mason.api.r2`)에 위치 — 다른 서비스가 R2를 쓰게 되면 그때 `common`으로 끌어올린다
-  - Groq API 클라이언트도 같은 이유로 `common`이 아니라 `api` 내부(`com.mason.api.groq`)에 위치 — 단순 HTTP 호출 1개뿐이라 분리 비용이 이점보다 큼
+- **common**: 두 서비스가 공유하는 라이브러리 모듈 (도메인 로직 없음). 현재는 Kafka 이벤트 DTO만 가짐
+  - R2(`com.mason.api.r2`), Groq(`com.mason.api.groq`), Instagram Graph API(`com.mason.api.instagram`), X API(`com.mason.api.x`) 클라이언트는 모두 `api`에서만 쓰는 단순 HTTP 호출이라 `common`으로 분리하지 않고 `api` 내부에 위치 — 두 번째 사용처가 생기면 그때 `common`으로 끌어올린다
 - 통신: Kafka로 비동기 처리 (아래 "포스팅 생성 플로우" 참고), 나머지(예약 발행 등)는 api 내부에서 처리
 - DB: PostgreSQL, `api`만 접근 (다른 서비스는 직접 DB를 건드리지 않음)
 
@@ -62,8 +59,8 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 - MSA 철학이 아니라 **운영상 필요**가 있는 컴포넌트만 분리
   - 봇(상시 WebSocket 연결) vs API(요청-응답 + 스케줄러) 실행 모델 차이
   - 배포 시 봇 연결 끊김 방지, API 스케일아웃 시 봇 중복 실행 방지
-- 별도 서비스로 분리할 운영상 근거가 없는 부분(이미지 처리/SNS 포스팅 실행/번역 호출)은 굳이 쪼개지 않고 `api` 내부 스케줄러 + `common`의 외부 클라이언트로 처리
-  - 외부 호출 클라이언트만 `common`으로 공유해 중복 구현을 피하고, DB 쓰기 책임은 `api`로 단일화해 정합성 문제를 피함
+- 별도 서비스로 분리할 운영상 근거가 없는 부분(이미지 처리/SNS 포스팅 실행/번역 호출)은 굳이 쪼개지 않고 `api` 내부 스케줄러 + `api` 내부 외부 클라이언트로 처리
+  - 외부 클라이언트는 전부 `api`에서만 쓰여서 `common`으로 공유할 이유가 없고, DB 쓰기 책임도 `api`로 단일화되어 정합성 문제를 피함
 - R2 자격증명은 DB(`api`)에만 저장 — discord-bot은 R2 업로드를 직접 하지 않고 Discord CDN URL만 전달하므로 비밀키를 공유할 필요가 없음
 
 ### 포스팅 생성 플로우 (Discord 사진 업로드 → Post 생성)
@@ -98,15 +95,17 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 - Kafka
   - discord-bot → api: `PhotoUploadRequested` (Discord 사진 첨부 감지 이벤트, R2 업로드는 api가 수신 후 처리)
   - api → discord-bot: `DiscordBotConnectCommand` (시작/종료/재시작 지시)
-- 스케줄링: api 내부에서 Spring `@Scheduled`로 예약 발행 대상 조회 → `common`의 외부 클라이언트 호출 → 필요시 Quartz로 확장
+- 스케줄링: api 내부에서 Spring `@Scheduled`로 예약 발행 대상 조회 → api 내부 외부 클라이언트 호출 → 필요시 Quartz로 확장
 
 ### 4-4. 외부 연동
 - Discord: JDA 라이브러리 (discord-bot에서만 사용)
 - Discord OAuth2: Spring Security OAuth2 Client (api)
 - Cloudflare R2: AWS SDK for Java (S3 호환) — `api`에서만 호출 (`com.mason.api.r2`), discord-bot은 R2를 직접 다루지 않음
 - 썸네일 생성: Thumbnailator (경량 라이브러리, api에서만 사용)
-- Instagram Graph API / X API 클라이언트는 `common` 모듈에 위치 (api에서만 쓰지만 도메인 로직과 분리)
-- Groq API 클라이언트는 `api` 내부(`com.mason.api.groq`)에 위치 — api에서만 쓰는 단순 HTTP 호출이라 `common`으로 분리하지 않음
+- Instagram Graph API 클라이언트는 `api` 내부(`com.mason.api.instagram`)에 위치
+- X API 클라이언트는 `api` 내부(`com.mason.api.x`)에 위치
+- Groq API 클라이언트는 `api` 내부(`com.mason.api.groq`)에 위치
+- 위 세 클라이언트 모두 api에서만 쓰는 단순 HTTP 호출이라 `common`으로 분리하지 않음
 - HTTP 클라이언트: WebClient / RestClient
 - 장애 대응: Resilience4j (재시도, 서킷브레이커, 레이트리밋)
   - 대상: Instagram Graph API, X API, Groq API (모두 정책 제약 있는 외부 의존성)

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>포스트 관리 · PostManager</title>
+    <th:block th:replace="~{fragments/layout :: themeInit}"></th:block>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
@@ -22,7 +23,7 @@
 <div class="preview-modal-backdrop" id="failureLogModal" hidden>
     <div class="preview-modal">
         <div class="preview-modal-header">
-            <strong>⚠ 발행 실패 로그</strong>
+            <strong>⚠ 포스팅 실패 로그</strong>
             <button type="button" class="preview-modal-close" id="failureLogCloseBtn" aria-label="닫기">✕</button>
         </div>
         <div class="preview-modal-body">
@@ -34,6 +35,7 @@
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 
 <script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/theme.js}"></script>
 <script th:src="@{/js/admin-posts.js}"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>설정 관리 · PostManager</title>
+    <th:block th:replace="~{fragments/layout :: themeInit}"></th:block>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
@@ -23,12 +24,30 @@
             <div class="settings-row discord-bot-row">
                 <div class="settings-row-label">
                     <span class="settings-key">연결 제어</span>
-                    <span class="settings-meta">discord.bot.token / discord.watch-channel-id 설정이 필요합니다.</span>
+                    <span class="settings-meta">discord.bot.token
+discord.watch-channel-id
+설정이 필요합니다.</span>
                 </div>
                 <div class="settings-row-actions">
                     <button type="button" id="botStartBtn" class="save-btn">시작</button>
                     <button type="button" id="botRestartBtn" class="ghost-btn">재시작</button>
                     <button type="button" id="botStopBtn" class="danger-btn">종료</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-section">
+        <h2 class="admin-section-title">Instagram</h2>
+        <div class="settings-panel">
+            <div class="settings-row instagram-status-row">
+                <div class="settings-row-label">
+                    <span class="settings-key"><span id="instagramStatusDot" class="status-dot status-dot-gray"></span> Access Token 상태</span>
+                    <span class="settings-meta" id="instagramStatusMeta">확인 중...</span>
+                </div>
+                <div class="settings-row-actions">
+                    <button type="button" id="instagramRecheckBtn" class="ghost-btn">다시 확인</button>
+                    <button type="button" id="instagramRefreshBtn" class="save-btn">수동 갱신</button>
                 </div>
             </div>
         </div>
@@ -53,6 +72,7 @@
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 
 <script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/theme.js}"></script>
 <script th:src="@{/js/admin-configs.js}"></script>
 </body>
 </html>

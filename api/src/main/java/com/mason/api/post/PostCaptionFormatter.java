@@ -48,7 +48,7 @@ public class PostCaptionFormatter {
             return "";
         }
 
-        StringBuilder credit = new StringBuilder("Member Build by");
+        StringBuilder credit = new StringBuilder("Build by");
         if (StringUtils.hasText(makerName)) {
             credit.append(" ").append(makerName.trim());
         }

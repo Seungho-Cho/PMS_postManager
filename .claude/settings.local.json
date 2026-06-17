@@ -5,7 +5,8 @@
       "Read(//tmp/**)",
       "Bash(javap net/dv8tion/jda/api/entities/channel/middleman/MessageChannel.class)",
       "Bash(docker exec *)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(./gradlew.bat :api:compileJava -q)"
     ]
   }
 }

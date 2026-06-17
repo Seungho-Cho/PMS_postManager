@@ -12,6 +12,13 @@
             </nav>
         </div>
         <div class="auth-area">
+            <button type="button" id="themeToggleBtn" class="theme-toggle" aria-label="라이트/다크 모드 전환">
+                <span class="theme-toggle-track">
+                    <span class="theme-toggle-icon theme-toggle-icon-sun">☀️</span>
+                    <span class="theme-toggle-icon theme-toggle-icon-moon">🌙</span>
+                </span>
+                <span class="theme-toggle-thumb"></span>
+            </button>
             <div th:if="${username}" class="user-info">
                 <img th:if="${currentDiscordIcon}" th:src="'https://cdn.discordapp.com/avatars/' + ${currentDiscordId} + '/' + ${currentDiscordIcon} + '.png'" class="avatar" alt="avatar">
                 <span th:text="${username}">사용자</span>
@@ -26,6 +33,14 @@
         </div>
     </div>
 </header>
+
+<script th:fragment="themeInit">
+(function () {
+    var stored = localStorage.getItem('theme');
+    var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 
 <footer th:fragment="footer" class="site-footer">
     <span>&copy; 2026 PostManager</span>

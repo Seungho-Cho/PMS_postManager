@@ -257,7 +257,7 @@ async function handleSave(status) {
         return;
     }
     if (status === 'DRAFT') {
-        showSuccess('임시저장했습니다.');
+        showSuccess('저장에 성공했습니다.');
         return;
     }
     window.location.href = '/posts';
