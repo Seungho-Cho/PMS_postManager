@@ -1,0 +1,3 @@
+dependencies {
+    // TODO: Kafka 이벤트 DTO 설계 후 jackson 등 추가
+}

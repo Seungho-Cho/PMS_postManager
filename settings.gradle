@@ -1,0 +1,3 @@
+rootProject.name = 'mason_insta'
+
+include 'api', 'discord-bot', 'worker', 'common'

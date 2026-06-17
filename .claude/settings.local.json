@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/c/spring/mason_insta/**)"
+    ]
+  }
+}

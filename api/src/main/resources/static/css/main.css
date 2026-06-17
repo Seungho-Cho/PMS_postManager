@@ -1,0 +1,117 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #f5f6f8;
+    color: #1f2328;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.auth-area {
+    display: flex;
+    align-items: center;
+}
+
+.login-btn {
+    background: #5865f2;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-btn:hover {
+    background: #4752c4;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+}
+
+.logout-btn {
+    background: none;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.hero {
+    padding: 80px 32px;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.hero p {
+    color: #5b6573;
+    font-size: 16px;
+}
+
+.login-error-banner {
+    background: #fdecea;
+    color: #b3261e;
+    font-weight: 600;
+    text-align: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f5c6c2;
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .auth-area {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .login-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .hero {
+        padding: 48px 20px;
+    }
+
+    .hero h1 {
+        font-size: 24px;
+    }
+
+    .hero p {
+        font-size: 14px;
+    }
+}
