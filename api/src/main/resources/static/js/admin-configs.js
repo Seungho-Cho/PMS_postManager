@@ -1,13 +1,5 @@
 const API_BASE = '/api/configs';
 
-function csrfHeader() {
-    const token = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('XSRF-TOKEN='))
-        ?.split('=')[1];
-    return { 'X-XSRF-TOKEN': token };
-}
-
 const configList = document.getElementById('configList');
 const errorBanner = document.getElementById('errorBanner');
 

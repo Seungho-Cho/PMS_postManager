@@ -1,4 +1,4 @@
-package com.mason.api.post;
+package com.mason.api.post.entity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +38,10 @@ public class Post {
 
 	@Column(name = "author_discord_icon", nullable = false)
 	private String authorDiscordIcon;
-	
+
+	@Column(name = "author_discord_nickname", nullable = false)
+	private String authorDiscordNickname;
+
     @Column(name = "author_discord_id", nullable = false)
     private String authorDiscordId;
 
@@ -69,10 +72,14 @@ public class Post {
      * Discord 사진 업로드 이벤트를 처리하면서 caption 없이 DRAFT 상태로 생성한다.
      * caption/title은 이후 사용자가 웹에서 작성한다.
      */
-    public Post(String discordMessageId, String authorDiscordId) {
+    public Post(String discordMessageId, String authorDiscordId, String authorDiscordIcon, String authorDiscordNickname) {
         this.discordMessageId = discordMessageId;
         this.authorDiscordId = authorDiscordId;
+        this.authorDiscordIcon = authorDiscordIcon;
+        this.authorDiscordNickname = authorDiscordNickname;
         this.status = PostStatus.DRAFT;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     /**
@@ -80,6 +87,23 @@ public class Post {
      */
     public void addPhoto(Photo photo) {
         photos.add(photo);
+    }
+
+    /**
+     * 사용자가 웹에서 작성하는 title/caption을 갱신한다.
+     */
+    public void updateContent(String title, String caption) {
+        this.title = title;
+        this.caption = caption;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 임시저장(DRAFT) 또는 발행 예약(SCHEDULED)으로 상태를 바꾼다.
+     */
+    public void changeStatus(PostStatus status) {
+        this.status = status;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public enum PostStatus {

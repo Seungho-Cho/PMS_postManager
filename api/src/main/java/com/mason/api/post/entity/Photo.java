@@ -1,4 +1,4 @@
-package com.mason.api.post;
+package com.mason.api.post.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

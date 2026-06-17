@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>포스트 편집 · PostManager</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header(${username}, ${avatar}, ${discordId})}"></header>
+
+<main class="admin-content" id="postDetailRoot" th:attr="data-post-id=${postId}">
+    <div class="admin-header">
+        <a href="/admin/posts" class="nav-link">← 목록으로</a>
+    </div>
+
+    <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
+
+    <div class="post-photos" id="postPhotos"></div>
+
+    <div class="settings-panel post-detail-form">
+        <label class="post-form-label">제목
+            <input id="titleInput" type="text">
+        </label>
+        <label class="post-form-label">캡션
+            <textarea id="captionInput" rows="6"></textarea>
+        </label>
+        <div class="settings-row-actions">
+            <button type="button" id="saveDraftBtn" class="logout-btn">임시저장</button>
+            <button type="button" id="scheduleBtn" class="save-btn">포스팅</button>
+            <button type="button" id="deleteBtn" class="logout-btn">삭제</button>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/admin-post-detail.js}"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@
         <div class="navbar-left">
             <a href="/" class="logo">PostManager</a>
             <nav class="nav-menu">
+                <a th:if="${username}" href="/admin/posts" class="nav-link">포스트 관리</a>
                 <a th:if="${username}" href="/admin/configs" class="nav-link">설정 관리</a>
                 <a href="https://linktr.ee/team_plamason" class="nav-link" target="_blank" rel="noopener">Linktree</a>
             </nav>
