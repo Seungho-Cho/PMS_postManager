@@ -25,6 +25,13 @@ subprojects {
         options.encoding = 'UTF-8'
     }
 
+    tasks.withType(Javadoc).configureEach {
+        options.encoding = 'UTF-8'
+        options.addStringOption('charSet', 'UTF-8')
+        options.addStringOption('Xdoclint:none', '-quiet')
+        failOnError = false
+    }
+
     tasks.named('test') {
         useJUnitPlatform()
     }

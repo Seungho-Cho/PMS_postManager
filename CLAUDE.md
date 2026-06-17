@@ -46,19 +46,32 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 1인 개발 + 낮은 트래픽 환경에서 풀 MSA는 오버엔지니어링.
 실행 모델이 다른 컴포넌트만 분리하는 것이 합리적.
 
-### 서비스 구성 (3개)
-- **api**: REST API, 인증, 도메인 로직 대부분 (Gradle 멀티모듈로 도메인 분리)
-  - 도메인 모듈: 사용자/인증, 사진/포스팅, 태그/번역, 스케줄링
-- **discord-bot**: JDA 기반, 상시 WebSocket 연결 유지, 사진 업로드 이벤트 감지
-- **worker**: 이미지 처리, SNS 포스팅 실행, 번역 호출 등 시간 소요/재시도 필요 작업
-- 통신: Kafka 이벤트 기반
-- DB: PostgreSQL 단일 인스턴스 공유 (MSA 원칙상 분리 권장되나, 이 규모에서는 단일 DB가 더 실용적)
+### 서비스 구성 (2개 + 공통 모듈)
+- **api**: REST API, 인증, 도메인 로직 전부 (Post/Photo/Tag), 예약 발행 스케줄링(`@Scheduled`), DB 쓰기 단일 책임자
+  - 도메인 모듈: 사용자/인증, 포스팅(Post/Photo), 태그/번역, 스케줄링
+- **discord-bot**: JDA 기반, 상시 WebSocket 연결 유지, 특정 채널 사진 업로드 감지 → 첨부파일 URL을 Kafka로 전달 (R2 업로드는 직접 하지 않음, 자격증명을 들고 있지 않음)
+- **common**: 두 서비스가 공유하는 라이브러리 모듈 (도메인 로직 없음)
+  - 외부 연동 클라이언트: Cloudflare R2, Instagram Graph API, X API, Groq API
+  - Kafka 이벤트 DTO
+- 통신: Kafka로 비동기 처리 (아래 "포스팅 생성 플로우" 참고), 나머지(예약 발행 등)는 api 내부에서 처리
+- DB: PostgreSQL, `api`만 접근 (다른 서비스는 직접 DB를 건드리지 않음)
 
 ### 분리 이유 (면접 답변 포인트)
-- MSA 철학이 아니라 **운영상 필요**에 의한 분리
-  - 봇(상시 연결) vs API(요청-응답) 실행 모델 차이
-  - 배포 시 봇 연결 끊김 방지
-  - API 스케일아웃 시 봇 중복 실행 방지
+- MSA 철학이 아니라 **운영상 필요**가 있는 컴포넌트만 분리
+  - 봇(상시 WebSocket 연결) vs API(요청-응답 + 스케줄러) 실행 모델 차이
+  - 배포 시 봇 연결 끊김 방지, API 스케일아웃 시 봇 중복 실행 방지
+- 별도 서비스로 분리할 운영상 근거가 없는 부분(이미지 처리/SNS 포스팅 실행/번역 호출)은 굳이 쪼개지 않고 `api` 내부 스케줄러 + `common`의 외부 클라이언트로 처리
+  - 외부 호출 클라이언트만 `common`으로 공유해 중복 구현을 피하고, DB 쓰기 책임은 `api`로 단일화해 정합성 문제를 피함
+- R2 자격증명은 DB(`api`)에만 저장 — discord-bot은 R2 업로드를 직접 하지 않고 Discord CDN URL만 전달하므로 비밀키를 공유할 필요가 없음
+
+### 포스팅 생성 플로우 (Discord 사진 업로드 → Post 생성)
+1. discord-bot이 특정 채널 메시지의 첨부파일(사진)을 감지 — 한 메시지에 여러 장이면 카루셀로 간주, `discordMessageId`가 그룹 키
+2. discord-bot이 Kafka에 발행: `PhotoUploadRequested { discordMessageId, discordChannelId, uploaderDiscordId, attachmentUrls[] }`
+3. api가 이 이벤트를 구독 → 각 URL을 다운로드 → `common`의 R2 클라이언트로 원본 업로드 + Thumbnailator로 썸네일 생성 후 업로드
+4. api가 R2 URL 기반으로 `Photo`를 생성(N장), `discordMessageId`로 `Post`를 생성(DRAFT 상태)하고 `addPhoto()`로 연결 후 저장
+   - `discordMessageId`는 `Post`의 unique 컬럼 — Kafka 재전송으로 인한 중복 생성을 멱등하게 방지
+5. **(예정/미구현)** Post 생성이 정상 완료되면 api가 `PostCreated { discordMessageId, postEditUrl }`를 Kafka로 역방향 발행 → discord-bot이 원본 메시지에 "포스트 수정하기" 링크가 달린 버튼(JDA Link Button)을 답글로 추가
+   - 이 단계가 추가되면 Kafka 통신이 `discord-bot → api` 단방향에서 양방향으로 바뀜
 
 ---
 
@@ -81,15 +94,13 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 
 ### 4-3. 비동기/메시징 (핵심 차별점)
 - Kafka
-  - Discord 사진 업로드 이벤트
-  - R2 업로드 완료 이벤트
-  - 포스팅 스케줄 트리거
-- 스케줄링: Spring `@Scheduled` → 필요시 Quartz로 확장
+  - discord-bot → api: Discord 사진 감지 + R2 업로드 완료 이벤트 (유일한 서비스 간 통신)
+- 스케줄링: api 내부에서 Spring `@Scheduled`로 예약 발행 대상 조회 → `common`의 외부 클라이언트 호출 → 필요시 Quartz로 확장
 
-### 4-4. 외부 연동
-- Discord: JDA 라이브러리
-- Discord OAuth2: Spring Security OAuth2 Client
-- Cloudflare R2: AWS SDK for Java (S3 호환)
+### 4-4. 외부 연동 (전부 `common` 모듈에 위치, api/discord-bot이 공유)
+- Discord: JDA 라이브러리 (discord-bot에서만 사용)
+- Discord OAuth2: Spring Security OAuth2 Client (api)
+- Cloudflare R2: AWS SDK for Java (S3 호환) — discord-bot(최초 업로드), api(추가 업로드) 양쪽에서 호출
 - 썸네일 생성: Thumbnailator (경량 라이브러리)
 - HTTP 클라이언트: WebClient / RestClient
 - 장애 대응: Resilience4j (재시도, 서킷브레이커, 레이트리밋)
@@ -119,14 +130,14 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 - Prometheus + Grafana (외부 API별 성공률/응답시간/서킷브레이커 오픈 횟수 대시보드)
 
 **생략 / 향후계획으로만 언급**
-- 분산 추적 (Zipkin/Tempo) — 서비스 3개 규모에선 효용 낮음
+- 분산 추적 (Zipkin/Tempo) — 서비스 2개 규모에선 효용 낮음
 - ELK 풀스택 — 리소스 부담 大
 
 ### 4-9. 인프라/CI-CD
 - Docker (멀티스테이지 빌드)
 - Kubernetes (홈서버 k3s)
 - GitHub Actions (빌드/테스트/이미지 빌드)
-- ArgoCD (GitOps 배포, 서비스 3개 → 멀티 앱 관리)
+- ArgoCD (GitOps 배포, 서비스 2개 → 멀티 앱 관리)
 - Helm 차트 (배포 설정 관리)
 
 ---

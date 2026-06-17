@@ -1,21 +1,16 @@
 package com.mason.api.home;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.ui.Model;
 
+/**
+ * 서비스 랜딩 페이지. 로그인 사용자 정보는 AuthModelAttributes가 공통으로 채워준다.
+ */
 @Controller
 public class HomeController {
 
     @GetMapping("/")
-    public String home(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        if (principal != null) {
-            model.addAttribute("username", principal.getAttribute("guildNickname"));
-            model.addAttribute("avatar", principal.getAttribute("avatar"));
-            model.addAttribute("discordId", principal.getAttribute("id"));
-        }
+    public String home() {
         return "index";
     }
 }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>설정 관리 · PostManager</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<header th:replace="~{fragments/layout :: header(${username}, ${avatar}, ${discordId})}"></header>
+
+<main class="admin-content">
+    <div class="admin-header">
+        <h1>설정 관리</h1>
+        <button type="button" id="addConfigBtn" class="login-btn">+ 새 설정</button>
+    </div>
+
+    <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
+
+    <div class="settings-panel">
+        <div class="settings-row settings-row-new" id="newConfigRow" style="display:none;">
+            <input id="newKeyInput" type="text" placeholder="key" class="key-input">
+            <input id="newValueInput" type="text" placeholder="value" class="value-input">
+            <div class="settings-row-actions">
+                <button type="button" id="confirmAddBtn" class="save-btn">추가</button>
+                <button type="button" id="cancelAddBtn" class="logout-btn">취소</button>
+            </div>
+        </div>
+        <div id="configList"></div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script th:src="@{/js/admin-configs.js}"></script>
+</body>
+</html>

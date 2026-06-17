@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header th:fragment="header(username, avatar, discordId)" class="navbar">
+    <div class="navbar-inner">
+        <div class="navbar-left">
+            <a href="/" class="logo">PostManager</a>
+            <nav class="nav-menu">
+                <a th:if="${username}" href="/admin/configs" class="nav-link">설정 관리</a>
+                <a href="https://linktr.ee/team_plamason" class="nav-link" target="_blank" rel="noopener">Linktree</a>
+            </nav>
+        </div>
+        <div class="auth-area">
+            <div th:if="${username}" class="user-info">
+                <img th:if="${avatar}" th:src="'https://cdn.discordapp.com/avatars/' + ${discordId} + '/' + ${avatar} + '.png'" class="avatar" alt="avatar">
+                <span th:text="${username}">사용자</span>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="logout-btn">로그아웃</button>
+                </form>
+            </div>
+            <a th:unless="${username}" th:href="@{/oauth2/authorization/discord}" class="login-btn">
+                Discord로 로그인
+            </a>
+        </div>
+    </div>
+</header>
+
+<footer th:fragment="footer" class="site-footer">
+    <span>&copy; 2026 PostManager</span>
+    <span class="footer-sep">·</span>
+    <a href="https://linktr.ee/team_plamason" target="_blank" rel="noopener">Linktree</a>
+</footer>
+</body>
+</html>
