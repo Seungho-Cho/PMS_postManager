@@ -1,3 +1,3 @@
-rootProject.name = 'mason_insta'
+rootProject.name = 'PMS_postManager'
 
 include 'api', 'discord-bot', 'worker', 'common'

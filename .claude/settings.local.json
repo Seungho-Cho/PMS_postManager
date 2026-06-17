@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Read(//mnt/c/spring/mason_insta/**)"
+      "Read(//mnt/c/spring/PMS_postManager/**)"
     ]
   }
 }
