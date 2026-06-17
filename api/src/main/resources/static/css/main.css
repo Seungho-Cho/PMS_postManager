@@ -261,12 +261,64 @@ a {
     margin: 0;
 }
 
+.admin-section {
+    margin-bottom: 28px;
+}
+
+.admin-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 10px;
+}
+
 .settings-panel {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+}
+
+.discord-bot-row {
+    justify-content: space-between;
+}
+
+.ghost-btn {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.ghost-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-primary-soft);
+}
+
+.danger-btn {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-danger);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.danger-btn:hover {
+    background: #fdecea;
+    border-color: var(--color-danger);
 }
 
 .settings-row {

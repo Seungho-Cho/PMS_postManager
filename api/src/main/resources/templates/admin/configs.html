@@ -17,17 +17,37 @@
 
     <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
 
-    <div class="settings-panel">
-        <div class="settings-row settings-row-new" id="newConfigRow" style="display:none;">
-            <input id="newKeyInput" type="text" placeholder="key" class="key-input">
-            <input id="newValueInput" type="text" placeholder="value" class="value-input">
-            <div class="settings-row-actions">
-                <button type="button" id="confirmAddBtn" class="save-btn">추가</button>
-                <button type="button" id="cancelAddBtn" class="logout-btn">취소</button>
+    <section class="admin-section">
+        <h2 class="admin-section-title">Discord 봇</h2>
+        <div class="settings-panel">
+            <div class="settings-row discord-bot-row">
+                <div class="settings-row-label">
+                    <span class="settings-key">연결 제어</span>
+                    <span class="settings-meta">discord.bot.token / discord.watch-channel-id 설정이 필요합니다.</span>
+                </div>
+                <div class="settings-row-actions">
+                    <button type="button" id="botStartBtn" class="save-btn">시작</button>
+                    <button type="button" id="botRestartBtn" class="ghost-btn">재시작</button>
+                    <button type="button" id="botStopBtn" class="danger-btn">종료</button>
+                </div>
             </div>
         </div>
-        <div id="configList"></div>
-    </div>
+    </section>
+
+    <section class="admin-section">
+        <h2 class="admin-section-title">키-값 설정</h2>
+        <div class="settings-panel">
+            <div class="settings-row settings-row-new" id="newConfigRow" style="display:none;">
+                <input id="newKeyInput" type="text" placeholder="key" class="key-input">
+                <input id="newValueInput" type="text" placeholder="value" class="value-input">
+                <div class="settings-row-actions">
+                    <button type="button" id="confirmAddBtn" class="save-btn">추가</button>
+                    <button type="button" id="cancelAddBtn" class="logout-btn">취소</button>
+                </div>
+            </div>
+            <div id="configList"></div>
+        </div>
+    </section>
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

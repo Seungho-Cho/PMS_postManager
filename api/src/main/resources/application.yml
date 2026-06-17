@@ -10,13 +10,25 @@ spring:
   application:
     name: api
   datasource:
-    url: jdbc:h2:mem:masoninsta;DB_CLOSE_DELAY=-1
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://localhost:5432/pms
+    driver-class-name: org.postgresql.Driver
+    username: pms
+    password: pms
   jpa:
     hibernate:
       ddl-auto: update
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: api
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.mason.common.event
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   security:
     oauth2:
       client:
@@ -36,5 +48,6 @@ spring:
             user-name-attribute: id
 
 app:
+  base-url: ${APP_BASE_URL:http://localhost:8181}
   discord:
     guild-id: ${DISCORD_GUILD_ID}

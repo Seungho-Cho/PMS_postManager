@@ -6,7 +6,9 @@ plugins {
 dependencies {
     implementation project(':common')
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
     implementation 'net.dv8tion:JDA:5.0.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

@@ -7,7 +7,7 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 
 ### 핵심 플로우
 1. Discord 특정 채널에 사진 업로드
-2. Discord 봇이 사진 크롤링 → Cloudflare R2 업로드 (원본 + 썸네일)
+2. Discord 봇이 사진 첨부파일 URL을 감지해 api로 전달 → api가 Cloudflare R2 업로드 (원본 + 썸네일)
 3. 웹앱에서 업로드된 사진 기반으로 포스팅 콘텐츠 작성
    - 태그 추천
    - 영문 번역 (Groq Free API)
@@ -51,8 +51,9 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
   - 도메인 모듈: 사용자/인증, 포스팅(Post/Photo), 태그/번역, 스케줄링
 - **discord-bot**: JDA 기반, 상시 WebSocket 연결 유지, 특정 채널 사진 업로드 감지 → 첨부파일 URL을 Kafka로 전달 (R2 업로드는 직접 하지 않음, 자격증명을 들고 있지 않음)
 - **common**: 두 서비스가 공유하는 라이브러리 모듈 (도메인 로직 없음)
-  - 외부 연동 클라이언트: Cloudflare R2, Instagram Graph API, X API, Groq API
+  - 외부 연동 클라이언트: Instagram Graph API, X API, Groq API (api에서만 사용하지만, 도메인 로직과 분리하기 위해 위치)
   - Kafka 이벤트 DTO
+  - Cloudflare R2 클라이언트는 `api`만 사용하므로 `common`이 아니라 `api` 내부(`com.mason.api.r2`)에 위치 — 다른 서비스가 R2를 쓰게 되면 그때 `common`으로 끌어올린다
 - 통신: Kafka로 비동기 처리 (아래 "포스팅 생성 플로우" 참고), 나머지(예약 발행 등)는 api 내부에서 처리
 - DB: PostgreSQL, `api`만 접근 (다른 서비스는 직접 DB를 건드리지 않음)
 
@@ -67,7 +68,7 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 ### 포스팅 생성 플로우 (Discord 사진 업로드 → Post 생성)
 1. discord-bot이 특정 채널 메시지의 첨부파일(사진)을 감지 — 한 메시지에 여러 장이면 카루셀로 간주, `discordMessageId`가 그룹 키
 2. discord-bot이 Kafka에 발행: `PhotoUploadRequested { discordMessageId, discordChannelId, uploaderDiscordId, attachmentUrls[] }`
-3. api가 이 이벤트를 구독 → 각 URL을 다운로드 → `common`의 R2 클라이언트로 원본 업로드 + Thumbnailator로 썸네일 생성 후 업로드
+3. api가 이 이벤트를 구독 → 각 URL을 다운로드 → `api` 내부 R2 클라이언트로 원본 업로드 + Thumbnailator로 썸네일 생성 후 업로드
 4. api가 R2 URL 기반으로 `Photo`를 생성(N장), `discordMessageId`로 `Post`를 생성(DRAFT 상태)하고 `addPhoto()`로 연결 후 저장
    - `discordMessageId`는 `Post`의 unique 컬럼 — Kafka 재전송으로 인한 중복 생성을 멱등하게 방지
 5. **(예정/미구현)** Post 생성이 정상 완료되면 api가 `PostCreated { discordMessageId, postEditUrl }`를 Kafka로 역방향 발행 → discord-bot이 원본 메시지에 "포스트 수정하기" 링크가 달린 버튼(JDA Link Button)을 답글로 추가
@@ -94,14 +95,16 @@ Discord에 올라온 사진을 자동 수집해 외부 스토리지에 저장하
 
 ### 4-3. 비동기/메시징 (핵심 차별점)
 - Kafka
-  - discord-bot → api: Discord 사진 감지 + R2 업로드 완료 이벤트 (유일한 서비스 간 통신)
+  - discord-bot → api: `PhotoUploadRequested` (Discord 사진 첨부 감지 이벤트, R2 업로드는 api가 수신 후 처리)
+  - api → discord-bot: `DiscordBotConnectCommand` (시작/종료/재시작 지시)
 - 스케줄링: api 내부에서 Spring `@Scheduled`로 예약 발행 대상 조회 → `common`의 외부 클라이언트 호출 → 필요시 Quartz로 확장
 
-### 4-4. 외부 연동 (전부 `common` 모듈에 위치, api/discord-bot이 공유)
+### 4-4. 외부 연동
 - Discord: JDA 라이브러리 (discord-bot에서만 사용)
 - Discord OAuth2: Spring Security OAuth2 Client (api)
-- Cloudflare R2: AWS SDK for Java (S3 호환) — discord-bot(최초 업로드), api(추가 업로드) 양쪽에서 호출
-- 썸네일 생성: Thumbnailator (경량 라이브러리)
+- Cloudflare R2: AWS SDK for Java (S3 호환) — `api`에서만 호출 (`com.mason.api.r2`), discord-bot은 R2를 직접 다루지 않음
+- 썸네일 생성: Thumbnailator (경량 라이브러리, api에서만 사용)
+- Instagram Graph API / X API / Groq API 클라이언트는 `common` 모듈에 위치 (api에서만 쓰지만 도메인 로직과 분리)
 - HTTP 클라이언트: WebClient / RestClient
 - 장애 대응: Resilience4j (재시도, 서킷브레이커, 레이트리밋)
   - 대상: Instagram Graph API, X API, Groq API (모두 정책 제약 있는 외부 의존성)

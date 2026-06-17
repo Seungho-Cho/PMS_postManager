@@ -128,6 +128,22 @@ async function handleListClick(event) {
     }
 }
 
+async function handleBotAction(action) {
+    clearError();
+    const res = await fetch(`/api/discord-bot/${action}`, {
+        method: 'POST',
+        headers: csrfHeader(),
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        showError(body?.message ?? 'discord 봇 제어에 실패했습니다.');
+    }
+}
+
+document.getElementById('botStartBtn').addEventListener('click', () => handleBotAction('start'));
+document.getElementById('botRestartBtn').addEventListener('click', () => handleBotAction('restart'));
+document.getElementById('botStopBtn').addEventListener('click', () => handleBotAction('stop'));
+
 addConfigBtn.addEventListener('click', openAddRow);
 cancelAddBtn.addEventListener('click', closeAddRow);
 confirmAddBtn.addEventListener('click', handleAdd);
