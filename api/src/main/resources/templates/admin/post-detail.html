@@ -8,14 +8,15 @@
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
-<header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
+<div class="sticky-top">
+    <header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
+    <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
+</div>
 
 <main class="admin-content" id="postDetailRoot" th:attr="data-post-id=${postId},data-current-discord-id=${currentDiscordId}">
     <div class="admin-header">
         <a href="/posts" class="nav-link">← 목록으로</a>
     </div>
-
-    <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
 
     <div class="post-photos" id="postPhotos"></div>
 
@@ -76,6 +77,7 @@
 
 <script th:src="@{/js/csrf.js}"></script>
 <script th:src="@{/js/theme.js}"></script>
+<script th:src="@{/js/nav-dropdown.js}"></script>
 <script th:src="@{/js/admin-post-detail.js}"></script>
 </body>
 </html>

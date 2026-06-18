@@ -290,6 +290,183 @@ instagramRecheckBtn.addEventListener('click', loadInstagramStatus);
 instagramRefreshBtn.addEventListener('click', handleInstagramRefresh);
 loadInstagramStatus();
 
+const MENU_API_BASE = '/api/custom-menu-items';
+
+const menuItemList = document.getElementById('menuItemList');
+const addMenuItemBtn = document.getElementById('addMenuItemBtn');
+const saveMenuItemsBtn = document.getElementById('saveMenuItemsBtn');
+
+let menuItems = [];
+let tempKeyCounter = 0;
+
+function keyOf(item) {
+    return item.id != null ? `id-${item.id}` : item.tempKey;
+}
+
+function readFileIntoTextarea(fileInput, textarea) {
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) {
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            textarea.value = reader.result;
+            autoGrow(textarea);
+        };
+        reader.readAsText(file);
+    });
+}
+
+function syncMenuItemsFromDom() {
+    menuItemList.querySelectorAll('.menu-item-row').forEach((row) => {
+        const item = menuItems.find((i) => keyOf(i) === row.dataset.key);
+        if (!item) {
+            return;
+        }
+        item.label = row.querySelector('.menu-label-input').value;
+        item.type = row.querySelector('.menu-type-input').value;
+        item.value = row.querySelector('.menu-value-input').value;
+        item.enabled = row.querySelector('.menu-enabled-input').checked;
+    });
+}
+
+function renderMenuItems() {
+    menuItemList.innerHTML = '';
+
+    menuItems.forEach((item, index) => {
+        const key = keyOf(item);
+        const isDivider = item.type === 'DIVIDER';
+
+        const row = document.createElement('div');
+        row.className = 'settings-row menu-item-row';
+        row.dataset.key = key;
+        row.dataset.disabledType = String(isDivider);
+        row.innerHTML = `
+            <div class="menu-move-buttons">
+                <button type="button" class="menu-move-btn menu-move-up" title="위로 이동" ${index === 0 ? 'disabled' : ''}>▲</button>
+                <button type="button" class="menu-move-btn menu-move-down" title="아래로 이동" ${index === menuItems.length - 1 ? 'disabled' : ''}>▼</button>
+            </div>
+            <input type="text" class="menu-label-input" placeholder="메뉴 노출명" value="${escapeHtml(item.label)}" ${isDivider ? 'disabled' : ''}>
+            <select class="menu-type-input">
+                <option value="URL" ${item.type === 'URL' ? 'selected' : ''}>URL</option>
+                <option value="HTML" ${item.type === 'HTML' ? 'selected' : ''}>HTML</option>
+                <option value="DIVIDER" ${item.type === 'DIVIDER' ? 'selected' : ''}>구분선</option>
+            </select>
+            <div class="menu-value-wrap">
+                <textarea class="value-input menu-value-input" rows="1" placeholder="URL 또는 HTML" ${isDivider ? 'disabled' : ''}>${escapeHtml(item.value)}</textarea>
+                <input type="file" accept=".html,.htm" class="menu-file-input" title="HTML 파일 업로드" style="${item.type === 'HTML' ? '' : 'display:none;'}">
+            </div>
+            <label class="menu-enabled-label" title="사용여부">
+                <input type="checkbox" class="menu-enabled-input" ${item.enabled ? 'checked' : ''} ${isDivider ? 'disabled' : ''}>사용
+            </label>
+            <button type="button" class="logout-btn delete-btn">삭제</button>
+        `;
+        menuItemList.appendChild(row);
+
+        const valueInput = row.querySelector('.menu-value-input');
+        const fileInput = row.querySelector('.menu-file-input');
+        const typeInput = row.querySelector('.menu-type-input');
+
+        autoGrow(valueInput);
+        valueInput.addEventListener('input', () => autoGrow(valueInput));
+        readFileIntoTextarea(fileInput, valueInput);
+
+        typeInput.addEventListener('change', () => {
+            syncMenuItemsFromDom();
+            item.type = typeInput.value;
+            renderMenuItems();
+        });
+
+        row.querySelector('.delete-btn').addEventListener('click', async () => {
+            clearError();
+            syncMenuItemsFromDom();
+            if (item.id != null) {
+                const res = await fetch(`${MENU_API_BASE}/${item.id}`, {
+                    method: 'DELETE',
+                    headers: csrfHeader(),
+                });
+                if (!res.ok) {
+                    showError('삭제에 실패했습니다.');
+                    return;
+                }
+            }
+            menuItems = menuItems.filter((i) => keyOf(i) !== key);
+            renderMenuItems();
+        });
+
+        row.querySelector('.menu-move-up').addEventListener('click', () => {
+            syncMenuItemsFromDom();
+            if (index > 0) {
+                [menuItems[index - 1], menuItems[index]] = [menuItems[index], menuItems[index - 1]];
+                renderMenuItems();
+            }
+        });
+
+        row.querySelector('.menu-move-down').addEventListener('click', () => {
+            syncMenuItemsFromDom();
+            if (index < menuItems.length - 1) {
+                [menuItems[index], menuItems[index + 1]] = [menuItems[index + 1], menuItems[index]];
+                renderMenuItems();
+            }
+        });
+    });
+}
+
+async function loadMenuItems() {
+    const res = await fetch(MENU_API_BASE);
+    if (!res.ok) {
+        showError('메뉴 목록을 불러오지 못했습니다.');
+        return;
+    }
+    const items = await res.json();
+    menuItems = items.map((item) => ({ ...item, tempKey: null }));
+    renderMenuItems();
+}
+
+function handleAddMenuItem() {
+    syncMenuItemsFromDom();
+    menuItems.push({
+        id: null,
+        tempKey: `new-${tempKeyCounter++}`,
+        label: '',
+        type: 'URL',
+        value: '',
+        enabled: true,
+    });
+    renderMenuItems();
+}
+
+async function handleSaveMenuItems() {
+    clearError();
+    syncMenuItemsFromDom();
+    const payload = menuItems.map((item) => ({
+        id: item.id,
+        label: item.label,
+        type: item.type,
+        value: item.value,
+        enabled: item.enabled,
+    }));
+
+    const res = await fetch(MENU_API_BASE, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...csrfHeader() },
+        body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        showError(body?.message ?? '저장에 실패했습니다.');
+        return;
+    }
+    showSuccess('바로가기 메뉴를 저장했습니다.');
+    await loadMenuItems();
+}
+
+addMenuItemBtn.addEventListener('click', handleAddMenuItem);
+saveMenuItemsBtn.addEventListener('click', handleSaveMenuItems);
+
+loadMenuItems();
+
 newValueInput.addEventListener('input', () => autoGrow(newValueInput));
 
 addConfigBtn.addEventListener('click', openAddRow);

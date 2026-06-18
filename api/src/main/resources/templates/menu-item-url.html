@@ -3,25 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PostManager</title>
+    <title th:text="${label} + ' · PostManager'">PostManager</title>
     <th:block th:replace="~{fragments/layout :: themeInit}"></th:block>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
 <div class="sticky-top">
     <header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
-    <div th:if="${param.loginError}" class="login-error-banner">
-        해당 Discord 서버 멤버만 로그인할 수 있습니다.
-    </div>
 </div>
 
-<main class="hero">
-    <div class="hero-inner">
-        <h1>Discord 사진을 SNS로</h1>
-        <p>Discord에 올린 사진을 자동 수집하고, Instagram &amp; X에 한 번에 포스팅하세요.</p>
-        <a th:unless="${username}" th:href="@{/oauth2/authorization/discord}" class="login-btn">
-            Discord로 시작하기
-        </a>
+<main class="auth-gate">
+    <div class="auth-gate-card">
+        <div class="auth-gate-icon">🔗</div>
+        <h1 th:text="${label}">바로가기</h1>
+        <p>외부 페이지로 연결됩니다.<br>아래 버튼을 누르면 새 탭에서 열립니다.</p>
+        <a th:href="${targetUrl}" target="_blank" rel="noopener" class="login-btn auth-gate-btn">연결하기</a>
     </div>
 </main>
 

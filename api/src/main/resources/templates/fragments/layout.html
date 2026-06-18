@@ -7,8 +7,15 @@
             <a href="/" class="logo">PostManager</a>
             <nav class="nav-menu">
                 <a th:if="${username}" href="/posts" class="nav-link">포스트 관리</a>
-                <a th:if="${username}" href="/admin/configs" class="nav-link">설정 관리</a>
-                <a href="https://linktr.ee/team_plamason" class="nav-link" target="_blank" rel="noopener">Linktree</a>
+                <div class="nav-dropdown" th:if="${username != null and customMenuItems != null and !customMenuItems.isEmpty()}">
+                    <button type="button" class="nav-link nav-dropdown-trigger">바로가기 ▾</button>
+                    <div class="nav-dropdown-panel">
+                        <th:block th:each="item : ${customMenuItems}">
+                            <hr th:if="${item.type.name() == 'DIVIDER'}" class="nav-dropdown-divider">
+                            <a th:unless="${item.type.name() == 'DIVIDER'}" th:href="@{/menu/{id}(id=${item.id})}" class="nav-dropdown-item" th:text="${item.label}">메뉴</a>
+                        </th:block>
+                    </div>
+                </div>
             </nav>
         </div>
         <div class="auth-area">
@@ -30,6 +37,7 @@
             <a th:unless="${username}" th:href="@{/oauth2/authorization/discord}" class="login-btn">
                 Discord로 로그인
             </a>
+            <a th:if="${username}" href="/admin/configs" class="icon-btn" aria-label="설정 관리" title="설정 관리">⚙️</a>
         </div>
     </div>
 </header>

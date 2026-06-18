@@ -8,14 +8,15 @@
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
-<header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
+<div class="sticky-top">
+    <header th:replace="~{fragments/layout :: header(${username}, ${currentDiscordIcon}, ${currentDiscordId})}"></header>
+    <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
+</div>
 
 <main class="admin-content">
     <div class="admin-header">
         <h1>포스트 관리</h1>
     </div>
-
-    <div id="errorBanner" class="login-error-banner" style="display:none;"></div>
 
     <div class="post-list" id="postGrid"></div>
 </main>
@@ -36,6 +37,7 @@
 
 <script th:src="@{/js/csrf.js}"></script>
 <script th:src="@{/js/theme.js}"></script>
+<script th:src="@{/js/nav-dropdown.js}"></script>
 <script th:src="@{/js/admin-posts.js}"></script>
 </body>
 </html>
